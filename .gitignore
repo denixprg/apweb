@@ -1,0 +1,17 @@
+﻿# Python
+__pycache__/
+*.pyc
+
+# Virtualenv
+venv/
+.venv/
+
+# Kivy
+.kivy/
+*.log
+
+# Editor
+.vscode/
+
+# OS
+.DS_Store

@@ -1,0 +1,8 @@
+﻿fastapi==0.110.3
+uvicorn==0.30.6
+sqlalchemy==1.4.52
+psycopg2-binary==2.9.9
+alembic==1.13.2
+python-jose==3.3.0
+passlib==1.7.4
+pydantic==1.10.16
