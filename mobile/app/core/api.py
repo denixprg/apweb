@@ -4,7 +4,7 @@ import os
 import requests
 from typing import Any, Dict, Optional
 
-DEFAULT_API_URL = os.getenv("API_URL", "http://127.0.0.1:8000")
+DEFAULT_API_URL = os.getenv("API_URL", "https://apweb-zhfm.onrender.com")
 
 
 class ApiClient:
