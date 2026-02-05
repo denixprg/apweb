@@ -25,6 +25,10 @@ app.add_middleware(
 
 app.include_router(admin_router)
 
+@app.get("/")
+def root():
+    return {"status": "ok", "service": "Rating App API"}
+
 
 @app.on_event("startup")
 def on_startup():
