@@ -1,6 +1,8 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import os
+from datetime import datetime, timedelta
+
 from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -14,6 +16,7 @@ from .bootstrap import ensure_bootstrap_users
 
 app = FastAPI(title="Rating App API")
 
+# CORS (solo afecta a navegadores; la app Kivy no lo necesita, pero no molesta)
 CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost").split(",")
 app.add_middleware(
     CORSMiddleware,
@@ -25,9 +28,17 @@ app.add_middleware(
 
 app.include_router(admin_router)
 
+
+# ✅ Ruta raíz para que el dominio no devuelva {"detail":"Not Found"}
 @app.get("/")
 def root():
     return {"status": "ok", "service": "Rating App API"}
+
+
+# ✅ Healthcheck útil para Render/monitoreo
+@app.get("/health")
+def health():
+    return {"ok": True}
 
 
 @app.on_event("startup")
@@ -103,6 +114,7 @@ def rate_item(item_id: str, payload: schemas.RatingCreate, db: Session = Depends
     item = crud.get_item(db, item_id)
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
+
     last_rating = (
         db.query(models.Rating)
         .filter(models.Rating.item_id == item_id, models.Rating.user_id == user.id)
@@ -110,9 +122,9 @@ def rate_item(item_id: str, payload: schemas.RatingCreate, db: Session = Depends
         .first()
     )
     if last_rating:
-        from datetime import datetime, timedelta
         if datetime.utcnow() - last_rating.created_at < timedelta(minutes=5):
             raise HTTPException(status_code=429, detail="COOLDOWN_RATING_5MIN")
+
     rating = crud.create_rating(db, item_id, user.id, payload.a, payload.b, payload.c, payload.d, payload.n)
     return rating
 
