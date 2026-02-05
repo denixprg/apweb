@@ -1,0 +1,9 @@
+﻿{
+  "name": "Rating App",
+  "short_name": "Rating",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0d1b2a",
+  "icons": []
+}

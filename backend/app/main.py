@@ -17,11 +17,16 @@ from .bootstrap import ensure_bootstrap_users
 app = FastAPI(title="Rating App API")
 
 # CORS (solo afecta a navegadores; la app Kivy no lo necesita, pero no molesta)
-CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost").split(",")
+cors_env = os.getenv("CORS_ORIGINS")
+if not cors_env:
+    CORS_ORIGINS = ["*"]
+else:
+    CORS_ORIGINS = [o.strip() for o in cors_env.split(",") if o.strip()]
+allow_credentials = False if "*" in CORS_ORIGINS else True
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[o.strip() for o in CORS_ORIGINS if o.strip()],
-    allow_credentials=True,
+    allow_origins=CORS_ORIGINS,
+    allow_credentials=allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -68,6 +73,25 @@ def login(payload: schemas.UserLogin, request: Request, db: Session = Depends(ge
     user = crud.get_user_by_username(db, payload.username)
     if not user or not verify_password(payload.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid credentials")
+    if user.is_blocked:
+        raise HTTPException(status_code=401, detail="User blocked")
+    token = create_access_token(str(user.id))
+    return schemas.Token(access_token=token)
+
+
+@app.post("/auth/pin", response_model=schemas.Token)
+def login_pin(payload: schemas.PinLogin, request: Request, db: Session = Depends(get_db)):
+    rate_limit(request, key_prefix="auth")
+    pin_map = {"1": "3221", "2": "6969", "3": "2626", "4": "3859"}
+    user_map = {"1": "p1", "2": "p2", "3": "p3", "4": "p4"}
+    if payload.profile not in pin_map:
+        raise HTTPException(status_code=401, detail="Invalid profile")
+    if payload.pin != pin_map[payload.profile]:
+        raise HTTPException(status_code=401, detail="Invalid PIN")
+    username = user_map[payload.profile]
+    user = crud.get_user_by_username(db, username)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid profile")
     if user.is_blocked:
         raise HTTPException(status_code=401, detail="User blocked")
     token = create_access_token(str(user.id))

@@ -21,6 +21,11 @@ class UserLogin(BaseModel):
     password: str
 
 
+class PinLogin(BaseModel):
+    profile: str
+    pin: str
+
+
 class UserOut(BaseModel):
     id: str
     username: str
